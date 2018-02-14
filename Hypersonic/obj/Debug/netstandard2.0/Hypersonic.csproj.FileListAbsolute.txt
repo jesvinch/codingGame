@@ -1,0 +1,6 @@
+C:\Users\jesvinc\source\repos\Hypersonic\Hypersonic\bin\Debug\netstandard2.0\Hypersonic.deps.json
+C:\Users\jesvinc\source\repos\Hypersonic\Hypersonic\bin\Debug\netstandard2.0\Hypersonic.dll
+C:\Users\jesvinc\source\repos\Hypersonic\Hypersonic\obj\Debug\netstandard2.0\Hypersonic.csprojResolveAssemblyReference.cache
+C:\Users\jesvinc\source\repos\Hypersonic\Hypersonic\obj\Debug\netstandard2.0\Hypersonic.csproj.CoreCompileInputs.cache
+C:\Users\jesvinc\source\repos\Hypersonic\Hypersonic\obj\Debug\netstandard2.0\Hypersonic.AssemblyInfoInputs.cache
+C:\Users\jesvinc\source\repos\Hypersonic\Hypersonic\obj\Debug\netstandard2.0\Hypersonic.AssemblyInfo.cs
