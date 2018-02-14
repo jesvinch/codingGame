@@ -10,7 +10,6 @@ namespace Hypersonic
     {
         public void TestBasic()
         {
-            //var hyerSonic = new HyperSonic_v1();
             
         }
     }

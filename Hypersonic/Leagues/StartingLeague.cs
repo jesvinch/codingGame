@@ -17,11 +17,9 @@ using System.Runtime.CompilerServices;
  * Each cell of the grid is either a floor or a box. Floor cells are indicated by a dot ( .), and boxes by a zero ( 0).
  * 
  */
-
-/* Progressed from Wood League 3 --> Wood League 2*/
-namespace MyNamespace2
+namespace MyNamespace
 {
-public class HyperSonic_v2
+public class StartingLeague
 {
     static void Main(string[] args)
     {
@@ -33,11 +31,9 @@ public class HyperSonic_v2
         int height = int.Parse(inputs[1]);
         int myId = int.Parse(inputs[2]);
 
-        int gameLoop = 0;
         int bombTimer = 0;
         int xAxisToGetTo = 0;
         int yAxisToGetTo = 0;
-        bool startingAtTopLeft = true;
         // Game loop
         while (true)
         {
@@ -48,18 +44,14 @@ public class HyperSonic_v2
                 Width = width
             };
             ReadBoard(height, board);
-            ReadEntities(board, myId);
+            ReadEntities(board);
 
-            var playerOne = board.Entities.First(x => x.Type == EntityType.Player && x.Owner == Owner.You); // get our player
-            Console.Error.Write("owner:" + playerOne.Owner);
-            Console.Error.Write(" x:" + playerOne.X);
-            Console.Error.WriteLine(" y:" + playerOne.Y);
-            
-            if (gameLoop == 0 && playerOne.X != 0)
-            {
-                startingAtTopLeft = false;
-            }
-            var nearestCellWithBox = board.GetCellWithLotsOfBoxes(playerOne.Y, startingAtTopLeft);
+            var player1 = board.Entities.First(x => x.Type == EntityType.Player && x.Owner == Owner.You); // get our player
+            Console.Error.Write("owner:" + player1.Owner);
+            Console.Error.Write(" x:" + player1.X);
+            Console.Error.WriteLine(" y:" + player1.Y);
+
+            var nearestCellWithBox = board.GetCellWithLotsOfBoxes(player1.Y);
             Console.Error.WriteLine("Nearest axis with Box - X:" + nearestCellWithBox.XAxis + ", Y:" + nearestCellWithBox.YAxis);
 
             if (bombTimer != 0)
@@ -67,47 +59,58 @@ public class HyperSonic_v2
                 bombTimer--;
             }
 
-            if (gameLoop == 0)
-            {
-                xAxisToGetTo = playerOne.X;
-                yAxisToGetTo = playerOne.Y;
-            }
-
             // check if position reached if not keep going
-            if (!(playerOne.X == xAxisToGetTo && playerOne.Y == yAxisToGetTo))
-             {
+            if (!(player1.X == xAxisToGetTo && player1.Y == yAxisToGetTo))
+            {
                 Console.Error.WriteLine("Keep moving");
-                playerOne.Move(xAxisToGetTo.ToString(), yAxisToGetTo.ToString());
+                player1.Move(xAxisToGetTo.ToString(), yAxisToGetTo.ToString());
                 continue;
             }
 
             // if next to a box wait there. 
-            if (playerOne.X == nearestCellWithBox.XAxis)
+            if (player1.X == nearestCellWithBox.XAxis - 1 || player1.X == nearestCellWithBox.XAxis + 1)
             {
-                if (bombTimer == 0) 
+                if (bombTimer == 0)
                 {
-                    playerOne.Bomb(playerOne.X.ToString(), playerOne.Y.ToString());
+                    player1.Bomb(player1.X.ToString(), player1.Y.ToString());
                     bombTimer = 7;
                     continue;
-                } 
+                }
 
-                playerOne.Move(xAxisToGetTo.ToString(), yAxisToGetTo.ToString());
+                player1.Move(xAxisToGetTo.ToString(), yAxisToGetTo.ToString());
                 continue;
             }
-            
-            xAxisToGetTo = nearestCellWithBox.XAxis;
+
+            // Determine if you should move to right or left of box
+            if (nearestCellWithBox.XAxis == 0)
+            {
+                xAxisToGetTo = nearestCellWithBox.XAxis + 1;
+            }
+            else
+            {
+                xAxisToGetTo = nearestCellWithBox.XAxis - 1;
+            }
+
             yAxisToGetTo = nearestCellWithBox.YAxis;
             var xx = xAxisToGetTo.ToString();
             var y = yAxisToGetTo.ToString();
-            
-            playerOne.Move(xx, y);
-            gameLoop++;
+
+            player1.Move(xx, y);
+
+            // BOMB and MOVE - one move
+            // MOVE - one move. 
+            // Bomb and wait till bomb goes off. Find best place to bomb
+            //player1.Move(nearestCellWithBox.XAxis.ToString(), (nearestCellWithBox.YAxis - 1).ToString());
+            //player1.Bomb(nearestCellWithBox.XAxis.ToString(), (nearestCellWithBox.YAxis - 1).ToString());
+
+
+            // Console.WriteLine("BOMB " + xCoordinate + " " + yCoordinate);
+            // Console.WriteLine("MOVE 6 5");
+            // Write an action using Console.WriteLine()
+            // To debug: Console.Error.WriteLine("Debug messages...");
         }
     }
-
-    /*
-     */
-    private static void ReadEntities(Board board, int yourId)
+    private static void ReadEntities(Board board)
     {
         int entities = int.Parse(Console.ReadLine()); // Amount of entities on the grid
         for (int i = 0; i < entities; i++)
@@ -120,13 +123,7 @@ public class HyperSonic_v2
             int param1 = int.Parse(inputs[4]);
             int param2 = int.Parse(inputs[5]);
 
-            Owner ownerValue = Owner.Enemy;
-            if (owner == yourId)
-            {
-                ownerValue = Owner.You;
-            }
-
-            var entity = new Entity(entityType, ownerValue, x, y, param1,param2);
+            var entity = new Entity(entityType, owner, x, y, param1, param2);
             board.Entities.Add(entity);
         }
     }
@@ -162,10 +159,10 @@ public class HyperSonic_v2
    they have. owner: 0 == you. owner:1 == enemy */
 public class Entity
 {
-    public Entity(int type, Owner owner, int x, int y, int param1, int param2)
+    public Entity(int type, int owner, int x, int y, int param1, int param2)
     {
         Type = DetermineEntityType(type);
-        Owner = owner;
+        Owner = DetermineOwner(owner);
         X = x;
         Y = y;
         Param1 = param1;
@@ -197,6 +194,15 @@ public class Entity
         }
         return EntityType.Bomb;
     }
+
+    public static Owner DetermineOwner(int owner)
+    {
+        if (owner == 0)
+        {
+            return Owner.You;
+        }
+        return Owner.Enemy;
+    }
 }
 
 public class Board
@@ -221,51 +227,48 @@ public class Board
         Cells.Add(cell);
     }
 
-    public Cell GetCellWithLotsOfBoxes(int currentYAxis, bool startingAtTop)
+    public Cell GetCellWithLotsOfBoxes(int currentPosition)
     {
-        var nextYAxis = currentYAxis;
-        var cellsWithBoxs = Cells.Where(x => x.YAxis == nextYAxis && x.CellState == CellState.Box);
-        
-        // Can't find any boxes in current row? Go to next row.
+        //int upperXRange = currentPosition + 2 > Width ? Width : currentPosition + 2;
+        //int lowerXRange = currentPosition - 2 < 0 ? 0 : currentPosition;
+        //var cellsWithinBombRange = Cells.Where(x => Enumerable.Range(lowerXRange, upperXRange).Contains(x.XAxis));
+        //var cellsWithBoxs = cellsWithinBombRange.Where(x => x.CellState == CellState.Box);
+
+        var cellsWithBoxs = Cells.Where(x => x.YAxis == currentPosition && x.CellState == CellState.Box);
+
+        // Can't find any boxes in current row? Go to next row. 
+        int nextYAxis = currentPosition + 1;
         while (!cellsWithBoxs.Any())
         {
-            Console.Error.WriteLine("Go to next row");
-            if (startingAtTop)
-            {
-                nextYAxis++;
-            }
-            else
-            {
-                nextYAxis--;
-            }
-            cellsWithBoxs = CheckIfRowHasBoxes(nextYAxis);
-            
+            Console.Error.WriteLine("GO to next row");
+            cellsWithBoxs = FindNextCellWithBox(nextYAxis);
+            nextYAxis++;
         }
-
-        var emptyCells = Cells.Where(x => x.YAxis == nextYAxis && x.CellState == CellState.EmptyCell);
-
         // Determine cell score.
-        foreach (var cell in emptyCells)
+        foreach (var cell in cellsWithBoxs)
         {
-            cell.GetRightNeighbour(Cells, Width, Height);
-            cell.GetLeftNeighbour(Cells, Width, Height);
-
-            if (cell.RightNeighbour?.CellState == CellState.Box)
+            if (cell.GetRightNeighbourPlus2(Cells, Width, Height) != null)
             {
-                cell.Score += 1;
+                if (cell.GetRightNeighbourPlus2(Cells, Width, Height).CellState == CellState.Box)
+                {
+                    cell.Score += 1;
+                }
             }
-            if (cell.LeftNeighbour?.CellState == CellState.Box)
+            if (cell.GetLeftNeighbourPlus2(Cells, Width, Height) != null)
             {
-                cell.Score += 1;
+                if (cell.GetLeftNeighbourPlus2(Cells, Width, Height).CellState == CellState.Box)
+                {
+                    cell.Score += 1;
+                }
             }
-            Console.Error.WriteLine("x:" + cell.XAxis + " y:" + cell.YAxis+ " Box score:" + cell.Score);
+            Console.Error.WriteLine("x:" + cell.XAxis + " y:" + cell.YAxis + " Box score:" + cell.Score);
         }
-        return emptyCells.OrderByDescending(x => x.Score).FirstOrDefault();
+        return cellsWithBoxs.OrderByDescending(x => x.Score).FirstOrDefault();
     }
 
-    private IEnumerable<Cell> CheckIfRowHasBoxes(int rowNumber)
+    private IEnumerable<Cell> FindNextCellWithBox(int yAxis)
     {
-        return Cells.Where(x => x.YAxis == rowNumber && x.CellState == CellState.Box);
+        return Cells.Where(x => x.YAxis == yAxis && x.CellState == CellState.Box);
     }
 }
 
@@ -283,27 +286,24 @@ public class Cell
     public int YAxis;
     public CellState CellState;
     public bool Bombed;
-    public Cell RightNeighbour { get; set; }
-    public Cell LeftNeighbour { get; set; }
 
     public int Score { get; set; }
-
-    public void GetRightNeighbour(List<Cell> cells, int height, int width)
+    public Cell GetRightNeighbourPlus2(List<Cell> cells, int height, int width)
     {
-        if (XAxis + 1 > width)
+        if (XAxis + 2 > width)
         {
-            RightNeighbour = null;
+            return null;
         }
-        RightNeighbour =  cells.SingleOrDefault(x => x.XAxis == XAxis + 1 && x.YAxis == YAxis);
+        return cells.SingleOrDefault(x => x.XAxis == XAxis + 2 && x.YAxis == YAxis);
     }
 
-    public void GetLeftNeighbour(List<Cell> cells, int height, int width)
+    public Cell GetLeftNeighbourPlus2(List<Cell> cells, int height, int width)
     {
-        if (XAxis - 1 < 0)
+        if (XAxis - 2 < 0)
         {
-            LeftNeighbour = null;
+            return null;
         }
-        LeftNeighbour =  cells.SingleOrDefault(x => x.XAxis == XAxis - 1 && x.YAxis == YAxis);
+        return cells.SingleOrDefault(x => x.XAxis == XAxis - 2 && x.YAxis == YAxis);
     }
 
 }
@@ -311,8 +311,7 @@ public class Cell
 public enum EntityType
 {
     Player,
-    Bomb,
-    Item
+    Bomb
 }
 
 public enum Owner
@@ -321,7 +320,8 @@ public enum Owner
     You
 }
 
-public enum CellState{
+public enum CellState
+{
     EmptyCell,
     Box
 }
